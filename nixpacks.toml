@@ -1,0 +1,23 @@
+# Railway Nixpacks Auto-Configuration
+# Docs: https://nixpacks.com/docs/configuration/file
+
+[phases.install]
+  cmds = ["npm ci --omit=dev"]
+  dependsOn = ["setup"]
+
+[phases.build]
+  cmds = ["npm run build"]
+  dependsOn = ["install"]
+
+[phases.start]
+  cmd = "npm start"
+  dependsOn = ["build"]
+
+[build]
+  # Pin Node.js 20 LTS (stable for Socket.IO)
+  nixpkgsArchive = "24.05"
+  nixPkgs = ["nodejs_20"]
+
+[start]
+  # Railway auto-injects PORT env var (app.js already reads process.env.PORT)
+  environment = { NODE_ENV = "production" }

@@ -1,0 +1,17 @@
+{
+  "name": "draw-world",
+  "version": "1.2.0",
+  "description": "Live multiplayer draw & walk world (Express + Socket.IO)",
+  "main": "app.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}
