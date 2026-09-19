@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Draw World — Live</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0b1220;color:#e2e8f0}
+#game{position:fixed;inset:0;touch-action:none}
+#map{display:block;width:100%;height:100%;background:#4ade80;touch-action:none}
+
+/* MINIMAP TOP LEFT */
+.minimap{position:fixed;top:14px;left:14px;width:180px;height:114px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:40;background:#0f172a}
+.minimap canvas{display:block;width:100%;height:100%}
+.minimap .lbl{position:absolute;bottom:4px;left:6px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7);text-shadow:0 1px 2px rgba(0,0,0,.6)}
+
+.topbar{position:fixed;top:14px;left:208px;right:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:30;pointer-events:none}
+.chip{pointer-events:auto;background:rgba(15,23,42,.55);backdrop-filter:blur(10px);padding:7px 12px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px}
+.chip b{color:#4ade80}
+.settings-btn{pointer-events:auto;width:34px;height:34px;border-radius:50%;background:rgba(15,23,42,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
+
+/* CHAT LOG TOP RIGHT */
+.log{position:fixed;right:14px;top:56px;width:min(300px,70vw);max-height:calc(100vh - 200px);display:flex;flex-direction:column-reverse;gap:5px;z-index:25;pointer-events:none;overflow:hidden}
+.msg{background:rgba(15,23,42,.55);backdrop-filter:blur(8px);padding:7px 10px;border-radius:11px;font-size:12.5px;line-height:1.35;border:1px solid rgba(255,255,255,.06);animation:pop .25s ease;max-width:100%;word-wrap:break-word}
+.msg b{color:#60a5fa;margin-right:4px}
+@keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+
+/* CHAT INPUT TOP RIGHT BELOW LOG */
+.chatbar{position:fixed;right:14px;top:auto;bottom:auto;left:auto;width:min(300px,70vw);top:calc(56px + min(38vh, 320px));display:flex;gap:6px;z-index:30}
+.chatbar input{flex:1;padding:10px 12px;border-radius:11px;background:rgba(15,23,42,.6);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);color:#f1f5f9;font-size:13px;outline:none}
+.chatbar input:focus{border-color:#3b82f6}
+.chatbar button{padding:0 14px;border-radius:11px;background:#3b82f6;color:#fff;font-weight:700;border:0;cursor:pointer;font-size:13px}
+
+/* RESIZABLE JOYSTICK */
+.joy{position:fixed;left:22px;bottom:26px;border-radius:50%;background:rgba(15,23,42,.42);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);touch-action:none;user-select:none;z-index:20}
+.joy .nub{position:absolute;left:50%;top:50%;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .08s}
+
+/* AVATAR — TRANSPARENT SQUARE (NO CIRCLE CROP) */
+.player{position:absolute;transform:translate(-50%,-50%);pointer-events:none;text-align:center;z-index:5}
+.player .av{width:58px;height:58px;display:block;margin:0 auto;image-rendering:-webkit-optimize-contrast;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+.player .nm{margin-top:3px;background:rgba(15,23,42,.7);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;display:inline-block}
+.player.me .av{filter:drop-shadow(0 0 0 2px #facc15) drop-shadow(0 0 10px rgba(250,204,21,.45)) drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+
+.bubble{position:absolute;white-space:nowrap;background:#fff;color:#0f172a;padding:5px 10px;border-radius:12px;font-size:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none;transform:translate(-50%,-100%);margin-top:-52px;max-width:220px;word-wrap:break-word;white-space:normal;text-align:center}
+.bubble::after{content:'';position:absolute;left:50%;bottom:-6px;margin-left:-6px;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #fff}
+
+/* SETTINGS MODAL */
+.modal{position:fixed;inset:0;background:rgba(2,6,23,.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.open{display:flex}
+.modal .card{width:min(360px,100%);background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal h3{margin:0 0 4px;font-size:18px}
+.modal .sub{color:#94a3b8;font-size:12px;margin:0 0 18px}
+.set-row{margin-bottom:16px}
+.set-row label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:600;margin-bottom:8px}
+.set-row .val{float:right;color:#60a5fa;font-weight:700}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:#334155;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#3b82f6;border:2px solid #fff;cursor:pointer}
+.modal .actions{display:flex;gap:8px;margin-top:6px}
+.modal button{flex:1;padding:11px;border-radius:11px;font-weight:700;border:0;cursor:pointer;font-size:13px}
+.modal .save{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff}
+.modal .reset{background:#1e293b;color:#cbd5e1;border:1px solid rgba(255,255,255,.06)}
+
+.keys{position:fixed;left:180px;bottom:30px;color:rgba(148,163,184,.7);font-size:11px;z-index:15;pointer-events:none}
+@media(max-width:720px){
+  .minimap{width:140px;height:88px;top:10px;left:10px}
+  .topbar{left:160px;top:10px;right:10px}
+  .log{right:10px;top:52px;width:min(260px,62vw)}
+  .chatbar{right:10px;width:min(260px,62vw);top:calc(52px + min(36vh, 280px))}
+  .keys{display:none}
+  .joy{left:14px !important;bottom:18px !important}
+}
+
+.overlay{position:fixed;inset:0;background:rgba(2,6,23,.92);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+.overlay.show{display:flex}
+.overlay .card{max-width:420px;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px}
+.overlay h2{margin:0 0 8px;font-size:22px}
+.overlay p{color:#94a3b8;margin:0 0 20px;font-size:14px;line-height:1.55}
+.overlay a{display:inline-block;padding:12px 22px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+
+<div id="game">
+  <canvas id="map"></canvas>
+  <div id="players"></div>
+</div>
+
+<div class="minimap">
+  <canvas id="mm" width="360" height="225"></canvas>
+  <div class="lbl">MAP</div>
+</div>
+
+<div class="topbar">
+  <div class="chip">🗺️ <span id="wc">0</span> online · <b id="mn">—</b></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="chip" id="ping">● connecting…</div>
+    <button class="settings-btn" id="sbtn" title="Settings">⚙</button>
+  </div>
+</div>
+
+<div class="log" id="log"></div>
+
+<form class="chatbar" id="cf" autocomplete="off">
+  <input id="ci" type="text" maxlength="80" placeholder="Say something…">
+  <button type="submit">Send</button>
+</form>
+
+<div class="joy" id="joy"><div class="nub" id="nub"></div></div>
+<div class="keys">WASD / Arrows to move</div>
+
+<div class="modal" id="modal">
+  <div class="card">
+    <h3>⚙ Settings</h3>
+    <p class="sub">Customize your controls</p>
+    <div class="set-row">
+      <label>Joystick Size <span class="val" id="jsv">130px</span></label>
+      <input id="jsize" type="range" min="80" max="200" value="130">
+    </div>
+    <div class="actions">
+      <button class="reset" id="rset">Reset</button>
+      <button class="save" id="msave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ov">
+  <div class="card">
+    <h2>🎨 Draw yourself first</h2>
+    <p>You need to draw an avatar and pick a name before entering the world. Redirecting…</p>
+    <a href="/">Go to Draw Page →</a>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(() => {
+  const avatar = sessionStorage.getItem('avatar');
+  const myName = sessionStorage.getItem('name');
+  const ov = document.getElementById('ov');
+
+  if (!avatar || !myName) {
+    ov.classList.add('show');
+    setTimeout(() => location.href = '/', 1800);
+    return;
+  }
+  document.getElementById('mn').textContent = myName;
+
+  // SETTINGS + JOYSTICK SIZE
+  const cfg = Object.assign({ joySize: 130 }, JSON.parse(localStorage.getItem('dw_cfg')||'{}'));
+  const joy = document.getElementById('joy'), nub = document.getElementById('nub');
+  function applyJoy(){
+    const s = cfg.joySize;
+    joy.style.width  = s+'px'; joy.style.height = s+'px';
+    const ns = Math.round(s * 0.42);
+    nub.style.width = ns+'px'; nub.style.height = ns+'px';
+    nub.style.margin = (-ns/2)+'px 0 0 '+(-ns/2)+'px';
+    document.getElementById('jsv').textContent = s+'px';
+    document.getElementById('jsize').value = s;
+  }
+  applyJoy();
+
+  document.getElementById('sbtn').onclick = () => document.getElementById('modal').classList.add('open');
+  document.getElementById('jsize').oninput = e => { cfg.joySize = +e.target.value; applyJoy(); };
+  document.getElementById('msave').onclick = () => {
+    localStorage.setItem('dw_cfg', JSON.stringify(cfg));
+    document.getElementById('modal').classList.remove('open');
+  };
+  document.getElementById('rset').onclick = () => { cfg.joySize = 130; applyJoy(); };
+  document.getElementById('modal').onclick = e => { if(e.target.id==='modal') document.getElementById('modal').classList.remove('open'); };
+
+  // CANVAS / WORLD
+  const canvas = document.getElementById('map');
+  const ctx = canvas.getContext('2d');
+  const mmCanvas = document.getElementById('mm');
+  const mmCtx = mmCanvas.getContext('2d');
+  const playersEl = document.getElementById('players');
+  const logEl = document.getElementById('log');
+  const pingEl = document.getElementById('ping');
+  const wcEl = document.getElementById('wc');
+
+  let MAP_W=3200, MAP_H=2000, rocks=[], selfId=null;
+  const players = new Map();
+  const camera = { x: MAP_W/2, y: MAP_H/2 };
+  const keys = new Set();
+  let input = {x:0,y:0};
+
+  function resize(){ canvas.width=innerWidth; canvas.height=innerHeight; }
+  resize(); addEventListener('resize', resize);
+
+  // STATIC WORLD — grass + rocks drawn ONCE to offscreen canvas
+  const worldCanvas = document.createElement('canvas');
+  let worldCtx = null;
+
+  function rr(c,x,y,w,h,r){
+    c.beginPath();
+    c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r);
+    c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r);
+    c.arcTo(x,y,x+w,y,r); c.closePath();
+  }
+
+  function drawRockOnWorld(r){
+    worldCtx.fillStyle='rgba(0,0,0,.22)';
+    worldCtx.beginPath(); worldCtx.ellipse(r.x+r.w/2+5, r.y+r.h+6, r.w/2, 11, 0, 0, Math.PI*2); worldCtx.fill();
+    const g = worldCtx.createLinearGradient(r.x,r.y,r.x,r.y+r.h);
+    g.addColorStop(0,'#9ca3af'); g.addColorStop(1,'#4b5563');
+    worldCtx.fillStyle=g; rr(worldCtx,r.x,r.y,r.w,r.h,14); worldCtx.fill();
+    worldCtx.fillStyle='rgba(255,255,255,.2)';
+    rr(worldCtx,r.x+7,r.y+7,r.w-14,r.h*0.34,10); worldCtx.fill();
+    worldCtx.strokeStyle='rgba(31,41,55,.5)'; worldCtx.lineWidth=1.5;
+    worldCtx.beginPath();
+    worldCtx.moveTo(r.x+r.w*0.3, r.y+8); worldCtx.lineTo(r.x+r.w*0.36, r.y+r.h*0.72);
+    worldCtx.moveTo(r.x+r.w*0.66, r.y+r.h*0.22); worldCtx.lineTo(r.x+r.w*0.72, r.y+r.h-10);
+    worldCtx.stroke();
+  }
+
+  function buildWorld(){
+    worldCanvas.width = MAP_W; worldCanvas.height = MAP_H;
+    worldCtx = worldCanvas.getContext('2d');
+    worldCtx.fillStyle = '#4ade80'; worldCtx.fillRect(0,0,MAP_W,MAP_H);
+    // static grass specks — LOCKED to world coords
+    for(let i=0;i<Math.floor(MAP_W*MAP_H/900);i++){
+      const x=Math.random()*MAP_W, y=Math.random()*MAP_H;
+      worldCtx.fillStyle = Math.random()<0.6 ? '#22c55e' : '#16a34a';
+      worldCtx.fillRect(x,y,2,3);
+    }
+    for(let i=0;i<400;i++){
+      const x=Math.random()*MAP_W, y=Math.random()*MAP_H;
+      worldCtx.fillStyle=['#fef3c7','#fecaca','#fbcfe8','#ddd6fe'][i%4];
+      worldCtx.fillRect(x,y,2,2);
+    }
+    for(let i=0;i<80;i++){
+      const x=Math.random()*MAP_W, y=Math.random()*MAP_H, r=18+Math.random()*30;
+      worldCtx.fillStyle='rgba(180,130,80,.25)';
+      worldCtx.beginPath(); worldCtx.arc(x,y,r,0,Math.PI*2); worldCtx.fill();
+    }
+    worldCtx.strokeStyle='rgba(21,128,61,.9)'; worldCtx.lineWidth=8;
+    worldCtx.strokeRect(4,4,MAP_W-8,MAP_H-8);
+    worldCtx.strokeStyle='rgba(250,204,21,.45)'; worldCtx.lineWidth=14;
+    worldCtx.strokeRect(0,0,MAP_W,MAP_H);
+    rocks.forEach(drawRockOnWorld);
+  }
+
+  // MAIN RENDER — blits only visible rect of static world (grass never shifts)
+  function render(){
+    const me = players.get(selfId);
+    if (me) { camera.x+=(me.x-camera.x)*0.12; camera.y+=(me.y-camera.y)*0.12; }
+    const vx = Math.max(0, Math.min(MAP_W - canvas.width,  camera.x - canvas.width/2));
+    const vy = Math.max(0, Math.min(MAP_H - canvas.height, camera.y - canvas.height/2));
+
+    if (worldCtx) ctx.drawImage(worldCanvas, vx,vy,canvas.width,canvas.height, 0,0,canvas.width,canvas.height);
+
+    playersEl.innerHTML='';
+    const ox=-vx, oy=-vy;
+    players.forEach(p => {
+      if(p.x+80<vx||p.x-80>vx+canvas.width||p.y+80<vy||p.y-80>vy+canvas.height) return;
+      const el=document.createElement('div');
+      el.className='player'+(p.id===selfId?' me':'');
+      el.style.left=(p.x+ox)+'px'; el.style.top=(p.y+oy)+'px';
+      el.innerHTML=`<img class="av" src="${p.avatar}" alt=""><div class="nm">${escapeHtml(p.name)}</div>`;
+      if(p.bubble){ const b=document.createElement('div'); b.className='bubble'; b.textContent=p.bubble; el.appendChild(b); }
+      playersEl.appendChild(el);
+    });
+    drawMinimap(vx,vy);
+    requestAnimationFrame(render);
+  }
+
+  // MINIMAP
+  function drawMinimap(vx,vy){
+    const W=mmCanvas.width, H=mmCanvas.height, sx=W/MAP_W, sy=H/MAP_H;
+    mmCtx.fillStyle='#166534'; mmCtx.fillRect(0,0,W,H);
+    mmCtx.fillStyle='#22c55e'; mmCtx.fillRect(1,1,W-2,H-2);
+    mmCtx.fillStyle='#6b7280';
+    rocks.forEach(r => mmCtx.fillRect(r.x*sx, r.y*sy, Math.max(2,r.w*sx), Math.max(2,r.h*sy)));
+    players.forEach(p => {
+      mmCtx.fillStyle = p.id===selfId ? '#facc15' : '#3b82f6';
+      mmCtx.beginPath(); mmCtx.arc(p.x*sx,p.y*sy,p.id===selfId?3.5:2.5,0,Math.PI*2); mmCtx.fill();
+    });
+    mmCtx.strokeStyle='rgba(255,255,255,.85)'; mmCtx.lineWidth=1;
+    mmCtx.strokeRect(vx*sx, vy*sy, Math.min(W,canvas.width*sx), Math.min(H,canvas.height*sy));
+  }
+
+  // MOVEMENT
+  setInterval(() => { if((input.x||input.y)&&selfId) socket.emit('move',{dx:input.x,dy:input.y}); }, 1000/60);
+
+  // JOYSTICK
+  let jActive=false,jId=null,jcx=0,jcy=0;
+  function jStart(e){
+    const t=e.touches?e.touches[0]:e;
+    if(e.touches) jId=e.touches[0].identifier;
+    jActive=true; const r=joy.getBoundingClientRect();
+    jcx=r.left+r.width/2; jcy=r.top+r.height/2; jMove(t);
+  }
+  function jMove(t){
+    if(!jActive) return;
+    let dx=t.clientX-jcx, dy=t.clientY-jcy;
+    const d=Math.hypot(dx,dy), max=cfg.joySize*0.33;
+    if(d>max){dx=(dx/d)*max; dy=(dy/d)*max;}
+    nub.style.transform=`translate(${dx}px,${dy}px)`;
+    input.x=dx/max; input.y=dy/max;
+  }
+  function jEnd(){jActive=false;jId=null;nub.style.transform='translate(0,0)';input.x=0;input.y=0;}
+  joy.addEventListener('touchstart',e=>{e.preventDefault();jStart(e)},{passive:false});
+  joy.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===jId){jMove(t);break;}},{passive:false});
+  joy.addEventListener('touchend',e=>{for(const t of e.changedTouches)if(t.identifier===jId){jEnd();break;}});
+  joy.addEventListener('mousedown',jStart);
+  window.addEventListener('mousemove',e=>{if(jActive)jMove(e)});
+  window.addEventListener('mouseup',()=>{if(jActive)jEnd()});
+
+  // KEYBOARD
+  addEventListener('keydown',e=>{
+    keys.add(e.key.toLowerCase()); updateKeys();
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+  });
+  addEventListener('keyup',e=>{keys.delete(e.key.toLowerCase()); updateKeys();});
+  function updateKeys(){
+    let x=0,y=0;
+    if(keys.has('w')||keys.has('arrowup')) y-=1;
+    if(keys.has('s')||keys.has('arrowdown')) y+=1;
+    if(keys.has('a')||keys.has('arrowleft')) x-=1;
+    if(keys.has('d')||keys.has('arrowright')) x+=1;
+    const l=Math.hypot(x,y)||1;
+    input.x=x/l; input.y=y/l;
+  }
+
+  // CHAT
+  document.getElementById('cf').addEventListener('submit',e=>{
+    e.preventDefault();
+    const inp=document.getElementById('ci'), v=inp.value.trim();
+    if(!v) return;
+    socket.emit('chat', v); inp.value='';
+  });
+  function addChat(name,msg){
+    const m=document.createElement('div');
+    m.className='msg'; m.innerHTML=`<b>${escapeHtml(name)}:</b> ${escapeHtml(msg)}`;
+    logEl.insertBefore(m, logEl.firstChild);
+    while(logEl.children.length>25) logEl.removeChild(logEl.lastChild);
+    setTimeout(()=>m.style.opacity='.5',6000);
+    setTimeout(()=>m.remove(),12000);
+  }
+
+  // SOCKET
+  const socket = io({ transports:['websocket','polling'] });
+  let lastPing=Date.now();
+  socket.on('connect',()=>{
+    pingEl.innerHTML='<span style="color:#4ade80">●</span> connected';
+    socket.emit('join',{name:myName,avatar});
+    setInterval(()=>{lastPing=Date.now();socket.emit('ping',()=>{
+      const ms=Date.now()-lastPing;
+      pingEl.innerHTML=`<span style="color:#4ade80">●</span> ${ms}ms`;
+    });},2500);
+  });
+  socket.on('disconnect',()=>pingEl.innerHTML='<span style="color:#f87171">●</span> offline');
+  socket.on('connect_error',()=>pingEl.innerHTML='<span style="color:#fbbf24">●</span> reconnecting…');
+  socket.on('init',d=>{
+    selfId=d.selfId; MAP_W=d.mapW; MAP_H=d.mapH; rocks=d.rocks||[];
+    camera.x=MAP_W/2; camera.y=MAP_H/2;
+    buildWorld();
+    d.players.forEach(p=>players.set(p.id,p));
+    wcEl.textContent=players.size;
+    requestAnimationFrame(render);
+    addChat('🌍 System',`Welcome ${myName}! Map ${MAP_W}×${MAP_H}. ${players.size>1?(players.size-1)+' online.':'You are first!'}`);
+  });
+  socket.on('playerJoin',p=>{players.set(p.id,p);wcEl.textContent=players.size;addChat('👋',`${p.name} joined`);});
+  socket.on('pos',({id,x,y})=>{const p=players.get(id);if(p){p.x=x;p.y=y;}});
+  socket.on('chatMsg',({id,name,msg})=>{
+    addChat(name,msg);
+    const p=players.get(id);
+    if(p){p.bubble=msg;clearTimeout(p._bt);p._bt=setTimeout(()=>{p.bubble=null;},4500);}
+  });
+  socket.on('leave',id=>{const p=players.get(id);if(p)addChat('🚪',`${p.name} left`);players.delete(id);wcEl.textContent=players.size;});
+
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Draw your avatar and make it LIVE- By Azuki</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0b1220;color:#e2e8f0;min-height:100vh}
+body{background:radial-gradient(1200px 600px at 10% -10%,rgba(59,130,246,.18),transparent 60%),radial-gradient(900px 500px at 110% 10%,rgba(16,185,129,.15),transparent 60%),#0b1220}
+.wrap{display:flex;flex-direction:column;min-height:100vh}
+.main{display:flex;flex:1;flex-direction:column}
+@media(min-width:900px){.main{flex-direction:row}}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;position:relative;min-height:52vh}
+.canvas-wrap{position:relative;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06);
+  background-image:linear-gradient(45deg,#1e293b 25%,transparent 25%),linear-gradient(-45deg,#1e293b 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1e293b 75%),linear-gradient(-45deg,transparent 75%,#1e293b 75%);
+  background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;background-color:#0f172a}
+#dc{display:block;touch-action:none;image-rendering:pixelated}
+.badge{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);color:#cbd5e1;font-size:11px;padding:6px 10px;border-radius:999px;font-family:ui-monospace,monospace;letter-spacing:.04em}
+.panel{width:100%;background:rgba(15,23,42,.85);backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,.06);padding:18px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+@media(min-width:900px){.panel{width:340px;border-top:0;border-left:1px solid rgba(255,255,255,.06)}}
+h1{margin:0;font-size:22px;letter-spacing:-.02em}
+.sub{color:#94a3b8;font-size:12px;margin-top:4px}
+label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:600;margin-bottom:8px}
+input[type=text]{width:100%;padding:12px 14px;border-radius:12px;background:#0f172a;border:1px solid rgba(255,255,255,.08);color:#f1f5f9;font-size:14px;outline:none;transition:.15s}
+input[type=text]:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.2)}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.btn{padding:10px 6px;border-radius:12px;background:#1e293b;color:#cbd5e1;border:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:600;cursor:pointer;transition:transform .1s,background .15s}
+.btn:active{transform:scale(.95)}
+.btn.active{background:#3b82f6;color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+.colors{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.sw{aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,.12);cursor:pointer;transition:.12s}
+.sw.active{transform:scale(1.15);box-shadow:0 0 0 2px #fff,0 0 16px rgba(255,255,255,.3)}
+.custom-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+input[type=color]{width:36px;height:36px;border:0;background:transparent;padding:0;cursor:pointer;border-radius:8px}
+.sizes{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.sz{padding:8px 0;border-radius:10px;background:#1e293b;color:#cbd5e1;border:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:600;cursor:pointer}
+.sz.active{background:#3b82f6;color:#fff;border-color:transparent}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:#334155;outline:none;margin-top:6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#3b82f6;border:2px solid #fff;cursor:pointer}
+.zoom-row{display:flex;align-items:center;gap:8px}
+.zbtn{width:36px;height:36px;border-radius:10px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,.06);font-weight:700;cursor:pointer;flex-shrink:0}
+.go{margin-top:auto;padding:14px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:700;font-size:15px;border:0;cursor:pointer;box-shadow:0 10px 28px rgba(16,185,129,.35);letter-spacing:.01em}
+.go:active{transform:scale(.98)}
+.hint{font-size:11px;color:#64748b;text-align:center;margin-top:-4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="main">
+    <div class="stage">
+      <div class="canvas-wrap" id="cw">
+        <canvas id="dc" width="400" height="400"></canvas>
+        <div class="badge" id="zl">100%</div>
+      </div>
+    </div>
+    <aside class="panel">
+      <div>
+        <h1>Draw Your Avatar</h1>
+        <div class="sub">Pinch to zoom · Drag two fingers to pan · Then enter the world</div>
+      </div>
+      <div>
+        <label>Your Name</label>
+        <input id="ni" type="text" maxlength="16" placeholder="e.g. Zome" autocomplete="off" value="">
+      </div>
+      <div>
+        <label>Tools</label>
+        <div class="tools">
+          <button class="btn active" data-tool="brush">✏️ Brush</button>
+          <button class="btn" data-tool="eraser">🧽 Erase</button>
+          <button class="btn" data-tool="fill">🪣 Fill</button>
+          <button class="btn" id="cb">🗑️ Clear</button>
+        </div>
+      </div>
+      <div>
+        <label>Colors</label>
+        <div class="colors" id="pal"></div>
+        <div class="custom-row">
+          <span style="color:#94a3b8;font-size:12px">Custom:</span>
+          <input id="cc" type="color" value="#000000">
+        </div>
+      </div>
+      <div>
+        <label>Brush Size · <span id="sv" style="color:#60a5fa">5</span> px</label>
+        <div class="sizes">
+          <button class="sz" data-s="2">2</button>
+          <button class="sz active" data-s="5">5</button>
+          <button class="sz" data-s="10">10</button>
+          <button class="sz" data-s="20">20</button>
+          <button class="sz" data-s="35">35</button>
+        </div>
+        <input id="ss" type="range" min="1" max="50" value="5">
+      </div>
+      <div>
+        <label>Zoom</label>
+        <div class="zoom-row">
+          <button class="zbtn" id="zo">−</button>
+          <input id="zs" type="range" min="50" max="400" value="100">
+          <button class="zbtn" id="zi">+</button>
+        </div>
+      </div>
+      <button class="go" id="gb">🚀 Enter World →</button>
+      <div class="hint">Tip: draw inside the circle for best results</div>
+    </aside>
+  </div>
+</div>
+<script>
+(() => {
+  const PAL = ['#000000','#ffffff','#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#78350f','#64748b','#fca5a5','#fde68a','#bbf7d0','#bfdbfe'];
+  const pal = document.getElementById('pal');
+  PAL.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'sw' + (c==='#000000'?' active':'');
+    b.style.background = c;
+    b.dataset.color = c;
+    pal.appendChild(b);
+  });
+
+  const canvas = document.getElementById('dc');
+  const ctx = canvas.getContext('2d');
+  const wrap = document.getElementById('cw');
+  let drawing=false, tool='brush', color='#000000', size=5;
+  let lx=0, ly=0, zoom=1, panX=0, panY=0;
+  let panning=false, ps={}, pinchDist=0, pinchMid=null;
+
+  function guide() {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.setLineDash([6,6]);
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(200,200,170,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  function reset() { ctx.clearRect(0,0,400,400); guide(); }
+  reset();
+
+  function fit() {
+    const maxW = Math.min(wrap.clientWidth || 360, 540);
+    canvas.style.width = (maxW*zoom)+'px';
+    canvas.style.height = (maxW*zoom)+'px';
+    canvas.style.transform = `translate(${panX}px, ${panY}px)`;
+  }
+  window.addEventListener('resize', fit); fit();
+
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x:(e.clientX-r.left)*(400/r.width), y:(e.clientY-r.top)*(400/r.height) };
+  }
+  function pt(e) { return e.touches?.[0] ?? e; }
+
+  function stroke(x,y) {
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.globalCompositeOperation = tool==='eraser' ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = tool==='eraser' ? 'rgba(0,0,0,1)' : color;
+    ctx.lineWidth = size;
+    ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(x,y); ctx.stroke();
+    lx=x; ly=y;
+  }
+  function flood(sx,sy,hex) {
+    sx|=0; sy|=0;
+    const img = ctx.getImageData(0,0,400,400), d=img.data;
+    const i=(sy*400+sx)*4, sr=d[i],sg=d[i+1],sb=d[i+2],sa=d[i+3];
+    const m=hex.replace('#',''); const fr=parseInt(m.substr(0,2),16),fg=parseInt(m.substr(2,2),16),fb=parseInt(m.substr(4,2),16);
+    if (sr===fr&&sg===fg&&sb===fb&&sa===255) return;
+    const stack=[[sx,sy]];
+    while(stack.length){
+      const [x,y]=stack.pop();
+      if(x<0||y<0||x>=400||y>=400) continue;
+      const j=(y*400+x)*4;
+      if(Math.abs(d[j]-sr)>8||Math.abs(d[j+1]-sg)>8||Math.abs(d[j+2]-sb)>8||Math.abs(d[j+3]-sa)>8) continue;
+      d[j]=fr;d[j+1]=fg;d[j+2]=fb;d[j+3]=255;
+      stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+    }
+    ctx.putImageData(img,0,0);
+  }
+
+  function down(e){
+    e.preventDefault();
+    if(e.touches && e.touches.length===2){
+      const [a,b]=e.touches;
+      pinchDist = Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      pinchMid = {x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2};
+      return;
+    }
+    if(e.shiftKey || e.button===1){
+      panning=true; const p=pt(e); ps={x:p.clientX,y:p.clientY,ox:panX,oy:panY}; return;
+    }
+    const p=pt(e), pp=pos(p);
+    if(tool==='fill'){ flood(pp.x,pp.y,color); return; }
+    drawing=true; lx=pp.x; ly=pp.y;
+    ctx.globalCompositeOperation = tool==='eraser'?'destination-out':'source-over';
+    ctx.fillStyle = tool==='eraser'?'rgba(0,0,0,1)':color;
+    ctx.beginPath(); ctx.arc(pp.x,pp.y,size/2,0,Math.PI*2); ctx.fill();
+  }
+  function move(e){
+    e.preventDefault();
+    if(e.touches && e.touches.length===2){
+      const [a,b]=e.touches, d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      const mid={x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2};
+      if(pinchDist>0){
+        const nz = Math.max(.5, Math.min(4, zoom*(d/pinchDist)));
+        zoom = nz;
+        document.getElementById('zs').value = Math.round(zoom*100);
+        document.getElementById('zl').textContent = Math.round(zoom*100)+'%';
+        if(pinchMid){ panX += (mid.x-pinchMid.x); panY += (mid.y-pinchMid.y); }
+        fit();
+      }
+      pinchDist=d; pinchMid=mid; return;
+    }
+    if(panning){ const p=pt(e); panX=ps.ox+(p.clientX-ps.x); panY=ps.oy+(p.clientY-ps.y); fit(); return; }
+    if(!drawing) return;
+    const p=pt(e), pp=pos(p); stroke(pp.x,pp.y);
+  }
+  function up(e){
+    if(e.touches && e.touches.length<2){ pinchDist=0; pinchMid=null; }
+    if(!e.touches || e.touches.length===0){ drawing=false; panning=false; }
+  }
+
+  canvas.addEventListener('mousedown',down);
+  window.addEventListener('mousemove',move);
+  window.addEventListener('mouseup',up);
+  canvas.addEventListener('touchstart',down,{passive:false});
+  canvas.addEventListener('touchmove',move,{passive:false});
+  canvas.addEventListener('touchend',up);
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+
+  document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('[data-tool]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); tool=b.dataset.tool;
+  });
+  pal.addEventListener('click',e=>{
+    const s=e.target.closest('.sw'); if(!s) return;
+    pal.querySelectorAll('.sw').forEach(x=>x.classList.remove('active'));
+    s.classList.add('active'); color=s.dataset.color; document.getElementById('cc').value=color;
+  });
+  document.getElementById('cc').oninput=e=>{ color=e.target.value; pal.querySelectorAll('.sw').forEach(x=>x.classList.remove('active')); };
+  document.querySelectorAll('.sz').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.sz').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); size=+b.dataset.s;
+    document.getElementById('sv').textContent=size; document.getElementById('ss').value=size;
+  });
+  document.getElementById('ss').oninput=e=>{
+    size=+e.target.value; document.getElementById('sv').textContent=size;
+    document.querySelectorAll('.sz').forEach(x=>x.classList.remove('active'));
+  };
+  const zs=document.getElementById('zs'), zl=document.getElementById('zl');
+  zs.oninput=e=>{ zoom=+e.target.value/100; zl.textContent=e.target.value+'%'; fit(); };
+  document.getElementById('zi').onclick=()=>{ zs.value=Math.min(400,+zs.value+25); zs.dispatchEvent(new Event('input')); };
+  document.getElementById('zo').onclick=()=>{ zs.value=Math.max(50,+zs.value-25); zs.dispatchEvent(new Event('input')); };
+  document.getElementById('cb').onclick=()=>{ if(confirm('Clear canvas?')) reset(); };
+  document.getElementById('gb').onclick=()=>{
+    const n=document.getElementById('ni').value.trim();
+    if(!n){ alert('Please enter your name first'); document.getElementById('ni').focus(); return; }
+    const t=document.createElement('canvas'); t.width=200; t.height=200;
+    t.getContext('2d').drawImage(canvas,0,0,200,200);
+    try {
+      sessionStorage.setItem('avatar', t.toDataURL('image/png'));
+      sessionStorage.setItem('name', n);
+      location.href = '/world';
+    } catch(err){
+      alert('Canvas too large — try clearing and drawing smaller.');
+    }
+  };
+  const saved = sessionStorage.getItem('name');
+  if(saved) document.getElementById('ni').value = saved;
+})();
+</script>
+</body>
+</html>
