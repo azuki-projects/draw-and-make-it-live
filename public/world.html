@@ -10,99 +10,254 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:-apple-syst
 #game{position:fixed;inset:0;touch-action:none}
 #map{display:block;width:100%;height:100%;background:#4ade80;touch-action:none}
 
-/* ========== MINIMAP — TOP RIGHT ========== */
-.minimap{position:fixed;top:14px;right:14px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:40;background:#0f172a;transition:width .15s,height .15s}
-.minimap canvas{display:block;width:100%;height:100%}
-.minimap .lbl{position:absolute;bottom:4px;left:6px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7);text-shadow:0 1px 2px rgba(0,0,0,.6)}
-
-/* TOPBAR — left avoids chat, right avoids minimap */
-.topbar{position:fixed;top:14px;left:14px;right:210px;z-index:30;pointer-events:none;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.chip{pointer-events:auto;background:rgba(15,23,42,.55);backdrop-filter:blur(10px);padding:7px 12px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px}
+/* ========== TOP HUD — AUTO RESPONSIVE, NEVER OVERLAPS ========== */
+.hud{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:10px;display:flex;flex-wrap:wrap;gap:8px;
+  justify-content:space-between;align-items:flex-start;
+  pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 70%);
+}
+.hud .group{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto}
+.chip{
+  background:rgba(15,23,42,.65);backdrop-filter:blur(10px);
+  padding:7px 12px;border-radius:999px;font-size:12px;
+  border:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;gap:7px;font-weight:600
+}
 .chip b{color:#4ade80}
-.icon-btn{pointer-events:auto;width:34px;height:34px;border-radius:50%;background:rgba(15,23,42,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.12s}
-.icon-btn:active{transform:scale(.93)}
+.icon-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(15,23,42,.65);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.1);color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:.12s;pointer-events:auto
+}
+.icon-btn:active{transform:scale(.92)}
 .icon-btn.on{background:#3b82f6;border-color:transparent}
 
-/* ========== CHAT — TOP LEFT (below topbar) ========== */
-.chat-wrap{position:fixed;left:14px;top:58px;width:min(320px,72vw);z-index:25;transition:opacity .25s}
-.chat-wrap.hidden .log, .chat-wrap.hidden .chatbar{opacity:0;pointer-events:none}
-.toggle-only{position:absolute;left:0;top:-38px;display:flex;gap:6px}
+/* ========== MINIMAP — TOP RIGHT (below HUD on mobile) ========== */
+.minimap{
+  position:fixed;z-index:90;
+  top:58px;right:10px;
+  border-radius:12px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+  background:#0f172a;transition:width .15s,height .15s
+}
+.minimap canvas{display:block;width:100%;height:100%}
+.minimap .lbl{
+  position:absolute;bottom:3px;left:6px;
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.75);text-shadow:0 1px 2px rgba(0,0,0,.7)
+}
 
-/* Roblox-style fade */
-.log{display:flex;flex-direction:column-reverse;gap:3px;max-height:38vh;overflow:hidden;margin-bottom:8px;transition:opacity .25s}
-.msg{
-  padding:5px 9px;border-radius:8px;font-size:12.5px;line-height:1.35;
-  word-wrap:break-word;animation:msgIn .22s ease-out;
-  background:rgba(15,23,42,var(--chat-alpha,.55));
-  border:1px solid rgba(255,255,255,var(--chat-border,.08));
+/* ========== ROBLOX-STYLE CHAT — TOP LEFT (scrollable, NO FADE) ========== */
+.chat-wrap{
+  position:fixed;z-index:80;
+  top:58px;left:10px;
+  width:min(310px,74vw);
+  transition:opacity .2s, transform .2s
+}
+.chat-wrap.hidden{opacity:0;transform:translateX(-20px);pointer-events:none}
+.chat-wrap.hidden + .chat-float{display:flex}
+
+/* Floating chat button when hidden */
+.chat-float{
+  display:none;position:fixed;z-index:85;
+  top:58px;left:10px;
+  width:42px;height:42px;border-radius:50%;
+  background:#3b82f6;color:#fff;border:0;
+  font-size:18px;cursor:pointer;align-items:center;justify-content:center;
+  box-shadow:0 6px 18px rgba(59,130,246,.45)
+}
+.chat-float .badge{
+  position:absolute;top:-4px;right:-4px;
+  background:#ef4444;color:#fff;font-size:10px;font-weight:700;
+  min-width:18px;height:18px;border-radius:9px;padding:0 5px;
+  display:flex;align-items:center;justify-content:center
+}
+
+/* SCROLLABLE LOG — newest at BOTTOM like Roblox */
+.log{
+  height:min(34vh,260px);overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;gap:2px;
+  padding:8px;border-radius:10px 10px 0 0;
+  background:rgba(15,23,42,var(--chat-alpha,.65));
+  border:1px solid rgba(255,255,255,var(--chat-border,.1));
   backdrop-filter:blur(8px);
-  transition:opacity 1.2s ease;
+  scroll-behavior:smooth;
+  -ms-overflow-style:none;scrollbar-width:thin
+}
+.log::-webkit-scrollbar{width:5px}
+.log::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:3px}
+.msg{
+  padding:4px 8px;border-radius:6px;font-size:12.5px;line-height:1.35;
+  word-wrap:break-word;animation:msgIn .18s ease-out;
+  background:rgba(255,255,255,.03)
 }
 .msg b{color:#60a5fa;margin-right:4px;font-weight:700}
 .msg.sys b{color:#facc15}
-.msg.fading{opacity:.35}
-.msg.gone{opacity:0;transform:translateX(-8px)}
-@keyframes msgIn{from{transform:translateX(-10px);opacity:0}to{transform:none;opacity:1}}
+.msg.sys{background:rgba(250,204,21,.06)}
+@keyframes msgIn{from{transform:translateY(4px);opacity:0}to{transform:none;opacity:1}}
 
-.chatbar{display:flex;gap:6px}
-.chatbar input{flex:1;padding:9px 11px;border-radius:9px;background:rgba(15,23,42,var(--chat-alpha,.55));backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,var(--chat-border,.08));color:#f1f5f9;font-size:13px;outline:none}
+.chatbar{
+  display:flex;gap:6px;margin-top:0;
+  padding:6px;border-radius:0 0 10px 10px;
+  background:rgba(15,23,42,var(--chat-alpha,.65));
+  border:1px solid rgba(255,255,255,var(--chat-border,.1));
+  border-top:0;backdrop-filter:blur(8px)
+}
+.chatbar input{
+  flex:1;padding:8px 10px;border-radius:7px;
+  background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);
+  color:#f1f5f9;font-size:13px;outline:none
+}
 .chatbar input:focus{border-color:#3b82f6}
-.chatbar button{padding:0 13px;border-radius:9px;background:#3b82f6;color:#fff;font-weight:700;border:0;cursor:pointer;font-size:13px}
+.chatbar button{
+  padding:0 12px;border-radius:7px;
+  background:#3b82f6;color:#fff;font-weight:700;
+  border:0;cursor:pointer;font-size:13px
+}
 
 /* RESIZABLE JOYSTICK */
-.joy{position:fixed;left:22px;bottom:26px;border-radius:50%;background:rgba(15,23,42,.42);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);touch-action:none;user-select:none;z-index:20}
-.joy .nub{position:absolute;left:50%;top:50%;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .08s}
-
-/* PLAYER — TRANSPARENT SQUARE (no circle crop) */
-.player{position:absolute;transform:translate(-50%,-50%);pointer-events:none;text-align:center;z-index:5}
-.player .av{width:58px;height:58px;display:block;margin:0 auto;image-rendering:-webkit-optimize-contrast;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
-.player .nm{margin-top:3px;background:rgba(15,23,42,.7);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;display:inline-block}
-.player.me .av{filter:drop-shadow(0 0 0 2px #facc15) drop-shadow(0 0 10px rgba(250,204,21,.45)) drop-shadow(0 6px 10px rgba(0,0,0,.35))}
-
-/* BUBBLES — MAX 3 STACKED UPWARD */
-.bubbles{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:4px;align-items:center;pointer-events:none;width:220px}
-.bubble{
-  background:#fff;color:#0f172a;padding:5px 10px;border-radius:11px;font-size:12px;font-weight:600;
-  box-shadow:0 4px 12px rgba(0,0,0,.22);max-width:220px;word-wrap:break-word;text-align:center;line-height:1.25;
-  animation:bubbleIn .22s cubic-bezier(.2,1.4,.4,1);
-  transition:opacity .5s ease, transform .35s ease;
-  position:relative;
+.joy{
+  position:fixed;left:18px;bottom:22px;z-index:70;
+  border-radius:50%;
+  background:rgba(15,23,42,.4);backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.12);
+  touch-action:none;user-select:none
 }
-.bubble:first-child::after{content:'';position:absolute;left:50%;bottom:-5px;margin-left:-5px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #fff}
-.bubble.fading{opacity:0;transform:translateY(-6px)}
-@keyframes bubbleIn{from{transform:scale(.6) translateY(6px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.joy .nub{
+  position:absolute;left:50%;top:50%;border-radius:50%;
+  background:rgba(255,255,255,.88);
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+  transition:transform .08s
+}
 
-/* SETTINGS MODAL — 4 SLIDERS */
-.modal{position:fixed;inset:0;background:rgba(2,6,23,.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+/* PLAYER — TRANSPARENT SQUARE */
+.player{
+  position:absolute;transform:translate(-50%,-50%);
+  pointer-events:none;text-align:center;z-index:5
+}
+.player .av{
+  width:56px;height:56px;display:block;margin:0 auto;
+  image-rendering:-webkit-optimize-contrast;
+  filter:drop-shadow(0 5px 9px rgba(0,0,0,.35))
+}
+.player .nm{
+  margin-top:2px;background:rgba(15,23,42,.75);
+  color:#fff;font-size:10.5px;font-weight:700;
+  padding:2px 7px;border-radius:999px;display:inline-block
+}
+.player.me .av{
+  filter:drop-shadow(0 0 0 2px #facc15)
+         drop-shadow(0 0 10px rgba(250,204,21,.45))
+         drop-shadow(0 5px 9px rgba(0,0,0,.35))
+}
+
+/* ========== SINGLE BUBBLE ONLY (no stacking) ========== */
+.bubble{
+  position:absolute;left:50%;bottom:36px;
+  transform:translateX(-50%);
+  background:#fff;color:#0f172a;
+  padding:5px 10px;border-radius:11px;
+  font-size:12px;font-weight:600;line-height:1.25;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+  max-width:200px;word-wrap:break-word;text-align:center;
+  animation:bubbleIn .2s cubic-bezier(.2,1.4,.4,1);
+  transition:opacity .35s, transform .35s
+}
+.bubble::after{
+  content:'';position:absolute;left:50%;bottom:-5px;
+  margin-left:-5px;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  border-top:5px solid #fff
+}
+.bubble.fading{opacity:0;transform:translate(-50%,-6px)}
+@keyframes bubbleIn{
+  from{transform:translate(-50%,6px) scale(.7);opacity:0}
+  to{transform:translate(-50%,0) scale(1);opacity:1}
+}
+
+/* ========== SETTINGS MODAL — ALL 4 SLIDERS VISIBLE ========== */
+.modal{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(2,6,23,.75);backdrop-filter:blur(5px);
+  display:none;align-items:center;justify-content:center;padding:16px
+}
 .modal.open{display:flex}
-.modal .card{width:min(380px,100%);max-height:90vh;overflow-y:auto;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal .card{
+  width:min(380px,100%);max-height:92vh;overflow-y:auto;
+  background:#0f172a;border:1px solid rgba(255,255,255,.1);
+  border-radius:18px;padding:20px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6)
+}
 .modal h3{margin:0 0 4px;font-size:18px}
 .modal .sub{color:#94a3b8;font-size:12px;margin:0 0 16px}
 .set-row{margin-bottom:14px}
-.set-row label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:600;margin-bottom:6px}
+.set-row label{
+  display:block;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:#94a3b8;font-weight:600;margin-bottom:6px
+}
 .set-row .val{float:right;color:#60a5fa;font-weight:700}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:#334155;outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#3b82f6;border:2px solid #fff;cursor:pointer}
-.modal .actions{display:flex;gap:8px;margin-top:10px}
-.modal button{flex:1;padding:11px;border-radius:11px;font-weight:700;border:0;cursor:pointer;font-size:13px}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:6px;border-radius:999px;
+  background:#334155;outline:none
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+  background:#3b82f6;border:2px solid #fff;cursor:pointer
+}
+.modal .actions{display:flex;gap:8px;margin-top:8px}
+.modal button{
+  flex:1;padding:11px;border-radius:11px;
+  font-weight:700;border:0;cursor:pointer;font-size:13px
+}
 .modal .save{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff}
-.modal .reset{background:#1e293b;color:#cbd5e1;border:1px solid rgba(255,255,255,.06)}
+.modal .reset{background:#1e293b;color:#cbd5e1;border:1px solid rgba(255,255,255,.08)}
 
-.keys{position:fixed;left:180px;bottom:30px;color:rgba(148,163,184,.7);font-size:11px;z-index:15;pointer-events:none}
-@media(max-width:720px){
-  .minimap{width:130px !important;height:82px !important;top:10px;right:10px}
-  .topbar{right:155px;top:10px;left:10px}
-  .chat-wrap{left:10px;top:54px;width:min(240px,58vw)}
-  .keys{display:none}
-  .joy{left:14px !important;bottom:18px !important}
+.keys{
+  position:fixed;left:170px;bottom:26px;z-index:60;
+  color:rgba(148,163,184,.75);font-size:11px;pointer-events:none
 }
 
-.overlay{position:fixed;inset:0;background:rgba(2,6,23,.92);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+/* MOBILE OVERRIDES — NO OVERLAP GUARANTEED */
+@media(max-width:720px){
+  .minimap{width:120px !important;height:76px !important;top:54px;right:8px}
+  .chat-wrap{top:54px;left:8px;width:min(230px,58vw)}
+  .chat-float{top:54px;left:8px}
+  .joy{left:10px !important;bottom:14px !important}
+  .keys{display:none}
+  .chip{font-size:11px;padding:6px 10px}
+  .icon-btn{width:34px;height:34px;font-size:15px}
+}
+@media(max-width:380px){
+  .minimap{width:95px !important;height:60px !important}
+  .chat-wrap{width:min(200px,55vw)}
+}
+
+/* No avatar overlay */
+.overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(2,6,23,.95);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;text-align:center
+}
 .overlay.show{display:flex}
-.overlay .card{max-width:420px;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px}
-.overlay h2{margin:0 0 8px;font-size:22px}
-.overlay p{color:#94a3b8;margin:0 0 20px;font-size:14px;line-height:1.55}
-.overlay a{display:inline-block;padding:12px 22px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-weight:700;text-decoration:none}
+.overlay .card{
+  max-width:400px;background:#0f172a;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:18px;padding:26px
+}
+.overlay h2{margin:0 0 8px;font-size:20px}
+.overlay p{color:#94a3b8;margin:0 0 18px;font-size:13px;line-height:1.5}
+.overlay a{
+  display:inline-block;padding:11px 20px;border-radius:11px;
+  background:linear-gradient(135deg,#3b82f6,#6366f1);
+  color:#fff;font-weight:700;text-decoration:none
+}
 </style>
 </head>
 <body>
@@ -112,72 +267,77 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div id="players"></div>
 </div>
 
-<!-- MINIMAP TOP RIGHT -->
+<!-- ========== TOP HUD — ALL BUTTONS HERE, NEVER OVERLAPPED ========== -->
+<div class="hud">
+  <div class="group">
+    <div class="chip">🗺️ <span id="wc">0</span> · <b id="mn">—</b></div>
+    <div class="chip" id="ping">● connecting</div>
+  </div>
+  <div class="group">
+    <button class="icon-btn on" id="tchat" title="Show/Hide Chat">💬</button>
+    <button class="icon-btn" id="sbtn" title="Settings">⚙</button>
+  </div>
+</div>
+
+<!-- MINIMAP TOP RIGHT (below HUD) -->
 <div class="minimap" id="mmbox">
   <canvas id="mm" width="360" height="225"></canvas>
   <div class="lbl">MAP</div>
 </div>
 
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="chip">🗺️ <span id="wc">0</span> online · <b id="mn">—</b></div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <div class="chip" id="ping">● connecting…</div>
-    <button class="icon-btn" id="tchat" title="Toggle Chat">💬</button>
-    <button class="icon-btn" id="sbtn" title="Settings">⚙</button>
-  </div>
-</div>
-
-<!-- CHAT TOP LEFT -->
+<!-- CHAT TOP LEFT (below HUD) -->
 <div class="chat-wrap" id="cw">
-  <div class="toggle-only">
-    <button class="icon-btn on" id="tchat2" title="Toggle Chat">💬</button>
-  </div>
   <div class="log" id="log"></div>
   <form class="chatbar" id="cf" autocomplete="off">
-    <input id="ci" type="text" maxlength="80" placeholder="Press Enter to chat…">
-    <button type="submit">Send</button>
+    <input id="ci" type="text" maxlength="80" placeholder="Type message…">
+    <button type="submit">➤</button>
   </form>
 </div>
+<button class="chat-float" id="tchat2" style="display:none">💬<span class="badge" id="unread">0</span></button>
 
 <!-- JOYSTICK -->
 <div class="joy" id="joy"><div class="nub" id="nub"></div></div>
 <div class="keys">WASD / Arrows · Enter = Chat</div>
 
-<!-- SETTINGS MODAL -->
+<!-- SETTINGS MODAL — 4 WORKING SLIDERS -->
 <div class="modal" id="modal">
   <div class="card">
     <h3>⚙ Settings</h3>
-    <p class="sub">All changes save automatically</p>
+    <p class="sub">Adjust to your screen. Saves automatically.</p>
+
     <div class="set-row">
       <label>Joystick Size <span class="val" id="jsv">130px</span></label>
       <input id="jsize" type="range" min="80" max="210" value="130">
     </div>
+
     <div class="set-row">
       <label>View Distance <span class="val" id="vdv">100%</span></label>
       <input id="vdist" type="range" min="60" max="180" value="100">
     </div>
+
     <div class="set-row">
-      <label>Chat Opacity <span class="val" id="cov">55%</span></label>
-      <input id="cop" type="range" min="10" max="100" value="55">
+      <label>Chat Background <span class="val" id="cov">65%</span></label>
+      <input id="cop" type="range" min="20" max="100" value="65">
     </div>
+
     <div class="set-row">
-      <label>Minimap Size <span class="val" id="msv">180px</span></label>
-      <input id="msize" type="range" min="110" max="260" value="180">
+      <label>Minimap Size <span class="val" id="msv">160px</span></label>
+      <input id="msize" type="range" min="90" max="240" value="160">
     </div>
+
     <div class="actions">
-      <button class="reset" id="rset">Reset All</button>
-      <button class="save" id="msave">Close</button>
+      <button class="reset" id="rset">Reset</button>
+      <button class="save" id="msave">Done</button>
     </div>
   </div>
 </div>
 
-<!-- NO-AVATAR OVERLAY -->
+<!-- NO AVATAR REDIRECT -->
 <div class="overlay" id="ov">
   <div class="card">
-    <h2>🎨 Draw yourself first</h2>
-    <p>You need to draw an avatar and pick a name before entering the world. Redirecting…</p>
-    <a href="/">Go to Draw Page →</a>
+    <h2>🎨 Draw first</h2>
+    <p>Make your avatar on the main page first. Redirecting…</p>
+    <a href="/">Draw Page →</a>
   </div>
 </div>
 <script src="/socket.io/socket.io.js"></script>
@@ -194,67 +354,73 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   }
   document.getElementById('mn').textContent = myName;
 
-  // ========== 4 SETTINGS — saved to localStorage ==========
-  const DEFAULTS = { joySize:130, viewDist:100, chatAlpha:55, mapSize:180 };
-  const cfg = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('dw_cfg2')||'{}'));
+  // ========== ALL 4 SETTINGS — working + saved ==========
+  const DEFAULTS = { joySize:130, viewDist:100, chatAlpha:65, mapSize:160 };
+  const cfg = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('dw_cfg3')||'{}'));
   const joy = document.getElementById('joy'), nub = document.getElementById('nub');
   const mmbox = document.getElementById('mmbox');
   const cw = document.getElementById('cw');
 
   function applyCfg(){
     // Joystick
-    joy.style.width = cfg.joySize+'px'; joy.style.height = cfg.joySize+'px';
+    joy.style.width  = cfg.joySize+'px';
+    joy.style.height = cfg.joySize+'px';
     const ns = Math.round(cfg.joySize*0.42);
-    nub.style.width=ns+'px'; nub.style.height=ns+'px';
+    nub.style.width  = ns+'px';
+    nub.style.height = ns+'px';
     nub.style.margin = (-ns/2)+'px 0 0 '+(-ns/2)+'px';
     document.getElementById('jsv').textContent = cfg.joySize+'px';
     document.getElementById('jsize').value = cfg.joySize;
 
-    // View dist → camera zoom factor
+    // View distance
     document.getElementById('vdv').textContent = cfg.viewDist+'%';
     document.getElementById('vdist').value = cfg.viewDist;
 
     // Chat opacity
     const a = cfg.chatAlpha/100;
     cw.style.setProperty('--chat-alpha', a.toFixed(2));
-    cw.style.setProperty('--chat-border', Math.min(.18, a*0.15).toFixed(2));
+    cw.style.setProperty('--chat-border', Math.min(.18, a*0.14).toFixed(2));
     document.getElementById('cov').textContent = cfg.chatAlpha+'%';
     document.getElementById('cop').value = cfg.chatAlpha;
 
-    // Minimap size (16:10 aspect)
-    mmbox.style.width = cfg.mapSize+'px';
+    // Minimap (16:10)
+    mmbox.style.width  = cfg.mapSize+'px';
     mmbox.style.height = Math.round(cfg.mapSize*0.63)+'px';
     document.getElementById('msv').textContent = cfg.mapSize+'px';
     document.getElementById('msize').value = cfg.mapSize;
   }
-  function save(){ localStorage.setItem('dw_cfg2', JSON.stringify(cfg)); }
+  function save(){ localStorage.setItem('dw_cfg3', JSON.stringify(cfg)); }
   applyCfg();
 
-  // Chat toggle (both buttons)
-  let chatOn = true;
-  function toggleChat(){
-    chatOn = !chatOn;
-    cw.classList.toggle('hidden', !chatOn);
-    document.getElementById('tchat').classList.toggle('on', chatOn);
-    document.getElementById('tchat2').classList.toggle('on', chatOn);
+  // ========== CHAT TOGGLE — 100% working ==========
+  let chatOn = true, unread = 0;
+  const tchat1 = document.getElementById('tchat');
+  const tchat2 = document.getElementById('tchat2');
+  const unreadEl = document.getElementById('unread');
+
+  function setChat(on){
+    chatOn = on;
+    cw.classList.toggle('hidden', !on);
+    tchat1.classList.toggle('on', on);
+    if(on){ unread = 0; unreadEl.textContent = '0'; }
   }
-  document.getElementById('tchat').onclick = toggleChat;
-  document.getElementById('tchat2').onclick = toggleChat;
+  tchat1.onclick = () => setChat(!chatOn);
+  tchat2.onclick = () => setChat(true);
   document.addEventListener('keydown', e => {
-    if(e.key === '/' && document.activeElement?.id !== 'ci'){ e.preventDefault(); toggleChat(); }
+    if(e.key === '/' && document.activeElement?.id !== 'ci'){ e.preventDefault(); setChat(!chatOn); }
   });
 
-  // Settings modal bindings
+  // ========== SETTINGS MODAL BINDINGS ==========
   document.getElementById('sbtn').onclick = () => document.getElementById('modal').classList.add('open');
   document.getElementById('msave').onclick = () => { save(); document.getElementById('modal').classList.remove('open'); };
   document.getElementById('rset').onclick = () => { Object.assign(cfg, DEFAULTS); applyCfg(); save(); };
   document.getElementById('modal').onclick = e => { if(e.target.id==='modal'){save();document.getElementById('modal').classList.remove('open');} };
-  document.getElementById('jsize').oninput = e => { cfg.joySize=+e.target.value; applyCfg(); };
-  document.getElementById('vdist').oninput = e => { cfg.viewDist=+e.target.value; applyCfg(); };
-  document.getElementById('cop').oninput   = e => { cfg.chatAlpha=+e.target.value; applyCfg(); };
-  document.getElementById('msize').oninput = e => { cfg.mapSize=+e.target.value; applyCfg(); };
+  document.getElementById('jsize').oninput = e => { cfg.joySize  = +e.target.value; applyCfg(); };
+  document.getElementById('vdist').oninput = e => { cfg.viewDist = +e.target.value; applyCfg(); };
+  document.getElementById('cop').oninput   = e => { cfg.chatAlpha= +e.target.value; applyCfg(); };
+  document.getElementById('msize').oninput = e => { cfg.mapSize  = +e.target.value; applyCfg(); };
 
-  // ========== CANVAS / WORLD ==========
+  // ========== CANVAS / STATIC WORLD ==========
   const canvas = document.getElementById('map');
   const ctx = canvas.getContext('2d');
   const mmCanvas = document.getElementById('mm');
@@ -273,7 +439,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   function resize(){ canvas.width=innerWidth; canvas.height=innerHeight; }
   resize(); addEventListener('resize', resize);
 
-  // STATIC WORLD (grass never moves)
   const worldCanvas = document.createElement('canvas');
   let worldCtx = null;
 
@@ -323,23 +488,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     rocks.forEach(drawRockOnWorld);
   }
 
-  // ========== MAIN RENDER with View Distance ==========
+  // ========== MAIN RENDER ==========
   function render(){
     const me = players.get(selfId);
     if (me) { camera.x+=(me.x-camera.x)*0.12; camera.y+=(me.y-camera.y)*0.12; }
 
-    // View dist → scale factor (100% = normal, >100 = zoom out = see further)
     const vf = cfg.viewDist/100;
     const vw = canvas.width / vf;
     const vh = canvas.height / vf;
-
     const vx = Math.max(0, Math.min(MAP_W - vw, camera.x - vw/2));
     const vy = Math.max(0, Math.min(MAP_H - vh, camera.y - vh/2));
 
-    // Blit static world (grass locked)
     if (worldCtx) ctx.drawImage(worldCanvas, vx,vy,vw,vh, 0,0,canvas.width,canvas.height);
 
-    // DOM players — scale screen coords by vf
+    // Players + single bubble
     playersEl.innerHTML='';
     const sx = canvas.width/vw, sy = canvas.height/vh;
     players.forEach(p => {
@@ -350,17 +512,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       el.style.left = sxp+'px'; el.style.top = syp+'px';
       el.style.transform = `translate(-50%,-50%) scale(${1/vf})`;
       el.innerHTML=`<img class="av" src="${p.avatar}" alt=""><div class="nm">${escapeHtml(p.name)}</div>`;
-      // Render up to 3 bubbles stacked upward
-      if(p.bubbles && p.bubbles.length){
-        const bs = document.createElement('div');
-        bs.className='bubbles';
-        p.bubbles.slice(0,3).forEach((b,i) => {
-          const d = document.createElement('div');
-          d.className = 'bubble' + (i===0?' tail':'') + (b.fading?' fading':'');
-          d.textContent = b.text;
-          bs.appendChild(d);
-        });
-        el.appendChild(bs);
+      if(p.bubble){
+        const b = document.createElement('div');
+        b.className = 'bubble' + (p.bubble.fading?' fading':'');
+        b.textContent = p.bubble.text;
+        el.appendChild(b);
       }
       playersEl.appendChild(el);
     });
@@ -369,7 +525,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     requestAnimationFrame(render);
   }
 
-  // ========== MINIMAP ==========
   function drawMinimap(vx,vy,vw,vh){
     const W=mmCanvas.width, H=mmCanvas.height, sx=W/MAP_W, sy=H/MAP_H;
     mmCtx.fillStyle='#166534'; mmCtx.fillRect(0,0,W,H);
@@ -384,7 +539,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     mmCtx.strokeRect(vx*sx, vy*sy, Math.min(W,vw*sx), Math.min(H,vh*sy));
   }
 
-  // Movement tick
   setInterval(() => { if((input.x||input.y)&&selfId) socket.emit('move',{dx:input.x,dy:input.y}); }, 1000/60);
   // ========== JOYSTICK ==========
   let jActive=false,jId=null,jcx=0,jcy=0;
@@ -410,7 +564,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   window.addEventListener('mousemove',e=>{if(jActive)jMove(e)});
   window.addEventListener('mouseup',()=>{if(jActive)jEnd()});
 
-  // ========== KEYBOARD + Enter to chat ==========
+  // ========== KEYBOARD ==========
   addEventListener('keydown',e=>{
     if(e.key === 'Enter'){
       const ci = document.getElementById('ci');
@@ -418,13 +572,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
         if(ci.value.trim()) document.getElementById('cf').dispatchEvent(new Event('submit'));
         ci.blur();
       } else {
-        if(!chatOn) toggleChat();
-        ci.focus();
+        if(!chatOn) setChat(true);
+        ci.focus(); ci.select();
       }
+      e.preventDefault();
       return;
     }
-    if(e.key === 'Escape' && document.activeElement?.id === 'ci'){
-      document.getElementById('ci').blur(); return;
+    if(e.key === 'Escape'){
+      if(document.activeElement?.id === 'ci') document.getElementById('ci').blur();
+      if(document.getElementById('modal').classList.contains('open')){save();document.getElementById('modal').classList.remove('open');}
+      return;
     }
     if(document.activeElement?.tagName === 'INPUT') return;
     keys.add(e.key.toLowerCase()); updateKeys();
@@ -441,64 +598,68 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     input.x=x/l; input.y=y/l;
   }
 
-  // ========== CHAT — log + 3 stacked bubbles ==========
+  // ========== SCROLLABLE CHAT (Roblox style — no fade) ==========
   document.getElementById('cf').addEventListener('submit',e=>{
     e.preventDefault();
     const inp=document.getElementById('ci'), v=inp.value.trim();
     if(!v) return;
-    socket.emit('chat', v); inp.value=''; inp.blur();
+    socket.emit('chat', v);
+    inp.value='';
   });
   function addChat(name,msg,isSys=false){
     const m=document.createElement('div');
     m.className='msg'+(isSys?' sys':'');
     m.innerHTML=`<b>${escapeHtml(name)}:</b> ${escapeHtml(msg)}`;
-    logEl.insertBefore(m, logEl.firstChild);
-    while(logEl.children.length>30) logEl.removeChild(logEl.lastChild);
-    setTimeout(()=>m.classList.add('fading'), 5500);
-    setTimeout(()=>{m.classList.add('gone');setTimeout(()=>m.remove(),400)}, 9000);
+    logEl.appendChild(m);
+    // Cap + auto scroll to bottom
+    while(logEl.children.length > 120) logEl.removeChild(logEl.firstChild);
+    logEl.scrollTop = logEl.scrollHeight;
+    // Unread badge if chat hidden
+    if(!chatOn){ unread++; unreadEl.textContent = unread > 99 ? '99+' : unread; }
   }
-  function pushBubble(pid, text){
+
+  // ========== SINGLE BUBBLE ONLY ==========
+  function setBubble(pid, text){
     const p = players.get(pid); if(!p) return;
-    if(!p.bubbles) p.bubbles = [];
-    p.bubbles.unshift({ text, fading:false });
-    if(p.bubbles.length > 3) p.bubbles.pop();
-    const b = p.bubbles[0];
-    clearTimeout(b._t);
-    b._t = setTimeout(() => {
-      b.fading = true;
-      setTimeout(() => { p.bubbles = p.bubbles.filter(x => x !== b); }, 500);
-    }, 4200);
+    p.bubble = { text, fading:false };
+    clearTimeout(p._bt);
+    p._bt = setTimeout(() => {
+      if(p.bubble){
+        p.bubble.fading = true;
+        setTimeout(() => { p.bubble = null; }, 350);
+      }
+    }, 4500);
   }
 
   // ========== SOCKET ==========
   const socket = io({ transports:['websocket','polling'] });
   let lastPing=Date.now();
   socket.on('connect',()=>{
-    pingEl.innerHTML='<span style="color:#4ade80">●</span> connected';
+    pingEl.innerHTML='<span style="color:#4ade80">●</span> ok';
     socket.emit('join',{name:myName,avatar});
     setInterval(()=>{lastPing=Date.now();socket.emit('ping',()=>{
       const ms=Date.now()-lastPing;
       pingEl.innerHTML=`<span style="color:#4ade80">●</span> ${ms}ms`;
-    });},2500);
+    });},3000);
   });
-  socket.on('disconnect',()=>pingEl.innerHTML='<span style="color:#f87171">●</span> offline');
-  socket.on('connect_error',()=>pingEl.innerHTML='<span style="color:#fbbf24">●</span> reconnecting…');
+  socket.on('disconnect',()=>pingEl.innerHTML='<span style="color:#f87171">●</span> off');
+  socket.on('connect_error',()=>pingEl.innerHTML='<span style="color:#fbbf24">●</span> …');
   socket.on('init',d=>{
     selfId=d.selfId; MAP_W=d.mapW; MAP_H=d.mapH; rocks=d.rocks||[];
     camera.x=MAP_W/2; camera.y=MAP_H/2;
     buildWorld();
-    d.players.forEach(p=>players.set(p.id,{...p,bubbles:[]}));
+    d.players.forEach(p=>players.set(p.id,{...p,bubble:null}));
     wcEl.textContent=players.size;
     requestAnimationFrame(render);
-    addChat('🌍 System',`Welcome ${myName}! Map ${MAP_W}×${MAP_H}. Press Enter to chat.`,true);
+    addChat('🌍','Welcome '+myName+'! Press Enter to chat.',true);
   });
-  socket.on('playerJoin',p=>{players.set(p.id,{...p,bubbles:[]});wcEl.textContent=players.size;addChat('👋',`${p.name} joined`,true);});
+  socket.on('playerJoin',p=>{players.set(p.id,{...p,bubble:null});wcEl.textContent=players.size;addChat('👋',p.name+' joined',true);});
   socket.on('pos',({id,x,y})=>{const p=players.get(id);if(p){p.x=x;p.y=y;}});
   socket.on('chatMsg',({id,name,msg})=>{
     addChat(name,msg);
-    pushBubble(id, msg);
+    setBubble(id, msg);
   });
-  socket.on('leave',id=>{const p=players.get(id);if(p)addChat('🚪',`${p.name} left`,true);players.delete(id);wcEl.textContent=players.size;});
+  socket.on('leave',id=>{const p=players.get(id);if(p)addChat('🚪',p.name+' left',true);players.delete(id);wcEl.textContent=players.size;});
 
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 })();
