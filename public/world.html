@@ -10,63 +10,89 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:-apple-syst
 #game{position:fixed;inset:0;touch-action:none}
 #map{display:block;width:100%;height:100%;background:#4ade80;touch-action:none}
 
-/* MINIMAP TOP LEFT */
-.minimap{position:fixed;top:14px;left:14px;width:180px;height:114px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:40;background:#0f172a}
+/* ========== MINIMAP — TOP RIGHT ========== */
+.minimap{position:fixed;top:14px;right:14px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:40;background:#0f172a;transition:width .15s,height .15s}
 .minimap canvas{display:block;width:100%;height:100%}
 .minimap .lbl{position:absolute;bottom:4px;left:6px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7);text-shadow:0 1px 2px rgba(0,0,0,.6)}
 
-.topbar{position:fixed;top:14px;left:208px;right:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:30;pointer-events:none}
+/* TOPBAR — left avoids chat, right avoids minimap */
+.topbar{position:fixed;top:14px;left:14px;right:210px;z-index:30;pointer-events:none;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .chip{pointer-events:auto;background:rgba(15,23,42,.55);backdrop-filter:blur(10px);padding:7px 12px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px}
 .chip b{color:#4ade80}
-.settings-btn{pointer-events:auto;width:34px;height:34px;border-radius:50%;background:rgba(15,23,42,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
+.icon-btn{pointer-events:auto;width:34px;height:34px;border-radius:50%;background:rgba(15,23,42,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.12s}
+.icon-btn:active{transform:scale(.93)}
+.icon-btn.on{background:#3b82f6;border-color:transparent}
 
-/* CHAT LOG TOP RIGHT */
-.log{position:fixed;right:14px;top:56px;width:min(300px,70vw);max-height:calc(100vh - 200px);display:flex;flex-direction:column-reverse;gap:5px;z-index:25;pointer-events:none;overflow:hidden}
-.msg{background:rgba(15,23,42,.55);backdrop-filter:blur(8px);padding:7px 10px;border-radius:11px;font-size:12.5px;line-height:1.35;border:1px solid rgba(255,255,255,.06);animation:pop .25s ease;max-width:100%;word-wrap:break-word}
-.msg b{color:#60a5fa;margin-right:4px}
-@keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+/* ========== CHAT — TOP LEFT (below topbar) ========== */
+.chat-wrap{position:fixed;left:14px;top:58px;width:min(320px,72vw);z-index:25;transition:opacity .25s}
+.chat-wrap.hidden .log, .chat-wrap.hidden .chatbar{opacity:0;pointer-events:none}
+.toggle-only{position:absolute;left:0;top:-38px;display:flex;gap:6px}
 
-/* CHAT INPUT TOP RIGHT BELOW LOG */
-.chatbar{position:fixed;right:14px;top:auto;bottom:auto;left:auto;width:min(300px,70vw);top:calc(56px + min(38vh, 320px));display:flex;gap:6px;z-index:30}
-.chatbar input{flex:1;padding:10px 12px;border-radius:11px;background:rgba(15,23,42,.6);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);color:#f1f5f9;font-size:13px;outline:none}
+/* Roblox-style fade */
+.log{display:flex;flex-direction:column-reverse;gap:3px;max-height:38vh;overflow:hidden;margin-bottom:8px;transition:opacity .25s}
+.msg{
+  padding:5px 9px;border-radius:8px;font-size:12.5px;line-height:1.35;
+  word-wrap:break-word;animation:msgIn .22s ease-out;
+  background:rgba(15,23,42,var(--chat-alpha,.55));
+  border:1px solid rgba(255,255,255,var(--chat-border,.08));
+  backdrop-filter:blur(8px);
+  transition:opacity 1.2s ease;
+}
+.msg b{color:#60a5fa;margin-right:4px;font-weight:700}
+.msg.sys b{color:#facc15}
+.msg.fading{opacity:.35}
+.msg.gone{opacity:0;transform:translateX(-8px)}
+@keyframes msgIn{from{transform:translateX(-10px);opacity:0}to{transform:none;opacity:1}}
+
+.chatbar{display:flex;gap:6px}
+.chatbar input{flex:1;padding:9px 11px;border-radius:9px;background:rgba(15,23,42,var(--chat-alpha,.55));backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,var(--chat-border,.08));color:#f1f5f9;font-size:13px;outline:none}
 .chatbar input:focus{border-color:#3b82f6}
-.chatbar button{padding:0 14px;border-radius:11px;background:#3b82f6;color:#fff;font-weight:700;border:0;cursor:pointer;font-size:13px}
+.chatbar button{padding:0 13px;border-radius:9px;background:#3b82f6;color:#fff;font-weight:700;border:0;cursor:pointer;font-size:13px}
 
 /* RESIZABLE JOYSTICK */
 .joy{position:fixed;left:22px;bottom:26px;border-radius:50%;background:rgba(15,23,42,.42);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);touch-action:none;user-select:none;z-index:20}
 .joy .nub{position:absolute;left:50%;top:50%;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .08s}
 
-/* AVATAR — TRANSPARENT SQUARE (NO CIRCLE CROP) */
+/* PLAYER — TRANSPARENT SQUARE (no circle crop) */
 .player{position:absolute;transform:translate(-50%,-50%);pointer-events:none;text-align:center;z-index:5}
 .player .av{width:58px;height:58px;display:block;margin:0 auto;image-rendering:-webkit-optimize-contrast;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
 .player .nm{margin-top:3px;background:rgba(15,23,42,.7);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;display:inline-block}
 .player.me .av{filter:drop-shadow(0 0 0 2px #facc15) drop-shadow(0 0 10px rgba(250,204,21,.45)) drop-shadow(0 6px 10px rgba(0,0,0,.35))}
 
-.bubble{position:absolute;white-space:nowrap;background:#fff;color:#0f172a;padding:5px 10px;border-radius:12px;font-size:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none;transform:translate(-50%,-100%);margin-top:-52px;max-width:220px;word-wrap:break-word;white-space:normal;text-align:center}
-.bubble::after{content:'';position:absolute;left:50%;bottom:-6px;margin-left:-6px;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #fff}
+/* BUBBLES — MAX 3 STACKED UPWARD */
+.bubbles{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:4px;align-items:center;pointer-events:none;width:220px}
+.bubble{
+  background:#fff;color:#0f172a;padding:5px 10px;border-radius:11px;font-size:12px;font-weight:600;
+  box-shadow:0 4px 12px rgba(0,0,0,.22);max-width:220px;word-wrap:break-word;text-align:center;line-height:1.25;
+  animation:bubbleIn .22s cubic-bezier(.2,1.4,.4,1);
+  transition:opacity .5s ease, transform .35s ease;
+  position:relative;
+}
+.bubble:first-child::after{content:'';position:absolute;left:50%;bottom:-5px;margin-left:-5px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #fff}
+.bubble.fading{opacity:0;transform:translateY(-6px)}
+@keyframes bubbleIn{from{transform:scale(.6) translateY(6px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 
-/* SETTINGS MODAL */
+/* SETTINGS MODAL — 4 SLIDERS */
 .modal{position:fixed;inset:0;background:rgba(2,6,23,.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.open{display:flex}
-.modal .card{width:min(360px,100%);background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal .card{width:min(380px,100%);max-height:90vh;overflow-y:auto;background:#0f172a;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
 .modal h3{margin:0 0 4px;font-size:18px}
-.modal .sub{color:#94a3b8;font-size:12px;margin:0 0 18px}
-.set-row{margin-bottom:16px}
-.set-row label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:600;margin-bottom:8px}
+.modal .sub{color:#94a3b8;font-size:12px;margin:0 0 16px}
+.set-row{margin-bottom:14px}
+.set-row label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:600;margin-bottom:6px}
 .set-row .val{float:right;color:#60a5fa;font-weight:700}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:#334155;outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#3b82f6;border:2px solid #fff;cursor:pointer}
-.modal .actions{display:flex;gap:8px;margin-top:6px}
+.modal .actions{display:flex;gap:8px;margin-top:10px}
 .modal button{flex:1;padding:11px;border-radius:11px;font-weight:700;border:0;cursor:pointer;font-size:13px}
 .modal .save{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff}
 .modal .reset{background:#1e293b;color:#cbd5e1;border:1px solid rgba(255,255,255,.06)}
 
 .keys{position:fixed;left:180px;bottom:30px;color:rgba(148,163,184,.7);font-size:11px;z-index:15;pointer-events:none}
 @media(max-width:720px){
-  .minimap{width:140px;height:88px;top:10px;left:10px}
-  .topbar{left:160px;top:10px;right:10px}
-  .log{right:10px;top:52px;width:min(260px,62vw)}
-  .chatbar{right:10px;width:min(260px,62vw);top:calc(52px + min(36vh, 280px))}
+  .minimap{width:130px !important;height:82px !important;top:10px;right:10px}
+  .topbar{right:155px;top:10px;left:10px}
+  .chat-wrap{left:10px;top:54px;width:min(240px,58vw)}
   .keys{display:none}
   .joy{left:14px !important;bottom:18px !important}
 }
@@ -86,44 +112,67 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div id="players"></div>
 </div>
 
-<div class="minimap">
+<!-- MINIMAP TOP RIGHT -->
+<div class="minimap" id="mmbox">
   <canvas id="mm" width="360" height="225"></canvas>
   <div class="lbl">MAP</div>
 </div>
 
+<!-- TOPBAR -->
 <div class="topbar">
   <div class="chip">🗺️ <span id="wc">0</span> online · <b id="mn">—</b></div>
   <div style="display:flex;gap:8px;align-items:center">
     <div class="chip" id="ping">● connecting…</div>
-    <button class="settings-btn" id="sbtn" title="Settings">⚙</button>
+    <button class="icon-btn" id="tchat" title="Toggle Chat">💬</button>
+    <button class="icon-btn" id="sbtn" title="Settings">⚙</button>
   </div>
 </div>
 
-<div class="log" id="log"></div>
+<!-- CHAT TOP LEFT -->
+<div class="chat-wrap" id="cw">
+  <div class="toggle-only">
+    <button class="icon-btn on" id="tchat2" title="Toggle Chat">💬</button>
+  </div>
+  <div class="log" id="log"></div>
+  <form class="chatbar" id="cf" autocomplete="off">
+    <input id="ci" type="text" maxlength="80" placeholder="Press Enter to chat…">
+    <button type="submit">Send</button>
+  </form>
+</div>
 
-<form class="chatbar" id="cf" autocomplete="off">
-  <input id="ci" type="text" maxlength="80" placeholder="Say something…">
-  <button type="submit">Send</button>
-</form>
-
+<!-- JOYSTICK -->
 <div class="joy" id="joy"><div class="nub" id="nub"></div></div>
-<div class="keys">WASD / Arrows to move</div>
+<div class="keys">WASD / Arrows · Enter = Chat</div>
 
+<!-- SETTINGS MODAL -->
 <div class="modal" id="modal">
   <div class="card">
     <h3>⚙ Settings</h3>
-    <p class="sub">Customize your controls</p>
+    <p class="sub">All changes save automatically</p>
     <div class="set-row">
       <label>Joystick Size <span class="val" id="jsv">130px</span></label>
-      <input id="jsize" type="range" min="80" max="200" value="130">
+      <input id="jsize" type="range" min="80" max="210" value="130">
+    </div>
+    <div class="set-row">
+      <label>View Distance <span class="val" id="vdv">100%</span></label>
+      <input id="vdist" type="range" min="60" max="180" value="100">
+    </div>
+    <div class="set-row">
+      <label>Chat Opacity <span class="val" id="cov">55%</span></label>
+      <input id="cop" type="range" min="10" max="100" value="55">
+    </div>
+    <div class="set-row">
+      <label>Minimap Size <span class="val" id="msv">180px</span></label>
+      <input id="msize" type="range" min="110" max="260" value="180">
     </div>
     <div class="actions">
-      <button class="reset" id="rset">Reset</button>
-      <button class="save" id="msave">Save</button>
+      <button class="reset" id="rset">Reset All</button>
+      <button class="save" id="msave">Close</button>
     </div>
   </div>
 </div>
 
+<!-- NO-AVATAR OVERLAY -->
 <div class="overlay" id="ov">
   <div class="card">
     <h2>🎨 Draw yourself first</h2>
@@ -145,30 +194,67 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   }
   document.getElementById('mn').textContent = myName;
 
-  // SETTINGS + JOYSTICK SIZE
-  const cfg = Object.assign({ joySize: 130 }, JSON.parse(localStorage.getItem('dw_cfg')||'{}'));
+  // ========== 4 SETTINGS — saved to localStorage ==========
+  const DEFAULTS = { joySize:130, viewDist:100, chatAlpha:55, mapSize:180 };
+  const cfg = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('dw_cfg2')||'{}'));
   const joy = document.getElementById('joy'), nub = document.getElementById('nub');
-  function applyJoy(){
-    const s = cfg.joySize;
-    joy.style.width  = s+'px'; joy.style.height = s+'px';
-    const ns = Math.round(s * 0.42);
-    nub.style.width = ns+'px'; nub.style.height = ns+'px';
+  const mmbox = document.getElementById('mmbox');
+  const cw = document.getElementById('cw');
+
+  function applyCfg(){
+    // Joystick
+    joy.style.width = cfg.joySize+'px'; joy.style.height = cfg.joySize+'px';
+    const ns = Math.round(cfg.joySize*0.42);
+    nub.style.width=ns+'px'; nub.style.height=ns+'px';
     nub.style.margin = (-ns/2)+'px 0 0 '+(-ns/2)+'px';
-    document.getElementById('jsv').textContent = s+'px';
-    document.getElementById('jsize').value = s;
+    document.getElementById('jsv').textContent = cfg.joySize+'px';
+    document.getElementById('jsize').value = cfg.joySize;
+
+    // View dist → camera zoom factor
+    document.getElementById('vdv').textContent = cfg.viewDist+'%';
+    document.getElementById('vdist').value = cfg.viewDist;
+
+    // Chat opacity
+    const a = cfg.chatAlpha/100;
+    cw.style.setProperty('--chat-alpha', a.toFixed(2));
+    cw.style.setProperty('--chat-border', Math.min(.18, a*0.15).toFixed(2));
+    document.getElementById('cov').textContent = cfg.chatAlpha+'%';
+    document.getElementById('cop').value = cfg.chatAlpha;
+
+    // Minimap size (16:10 aspect)
+    mmbox.style.width = cfg.mapSize+'px';
+    mmbox.style.height = Math.round(cfg.mapSize*0.63)+'px';
+    document.getElementById('msv').textContent = cfg.mapSize+'px';
+    document.getElementById('msize').value = cfg.mapSize;
   }
-  applyJoy();
+  function save(){ localStorage.setItem('dw_cfg2', JSON.stringify(cfg)); }
+  applyCfg();
 
+  // Chat toggle (both buttons)
+  let chatOn = true;
+  function toggleChat(){
+    chatOn = !chatOn;
+    cw.classList.toggle('hidden', !chatOn);
+    document.getElementById('tchat').classList.toggle('on', chatOn);
+    document.getElementById('tchat2').classList.toggle('on', chatOn);
+  }
+  document.getElementById('tchat').onclick = toggleChat;
+  document.getElementById('tchat2').onclick = toggleChat;
+  document.addEventListener('keydown', e => {
+    if(e.key === '/' && document.activeElement?.id !== 'ci'){ e.preventDefault(); toggleChat(); }
+  });
+
+  // Settings modal bindings
   document.getElementById('sbtn').onclick = () => document.getElementById('modal').classList.add('open');
-  document.getElementById('jsize').oninput = e => { cfg.joySize = +e.target.value; applyJoy(); };
-  document.getElementById('msave').onclick = () => {
-    localStorage.setItem('dw_cfg', JSON.stringify(cfg));
-    document.getElementById('modal').classList.remove('open');
-  };
-  document.getElementById('rset').onclick = () => { cfg.joySize = 130; applyJoy(); };
-  document.getElementById('modal').onclick = e => { if(e.target.id==='modal') document.getElementById('modal').classList.remove('open'); };
+  document.getElementById('msave').onclick = () => { save(); document.getElementById('modal').classList.remove('open'); };
+  document.getElementById('rset').onclick = () => { Object.assign(cfg, DEFAULTS); applyCfg(); save(); };
+  document.getElementById('modal').onclick = e => { if(e.target.id==='modal'){save();document.getElementById('modal').classList.remove('open');} };
+  document.getElementById('jsize').oninput = e => { cfg.joySize=+e.target.value; applyCfg(); };
+  document.getElementById('vdist').oninput = e => { cfg.viewDist=+e.target.value; applyCfg(); };
+  document.getElementById('cop').oninput   = e => { cfg.chatAlpha=+e.target.value; applyCfg(); };
+  document.getElementById('msize').oninput = e => { cfg.mapSize=+e.target.value; applyCfg(); };
 
-  // CANVAS / WORLD
+  // ========== CANVAS / WORLD ==========
   const canvas = document.getElementById('map');
   const ctx = canvas.getContext('2d');
   const mmCanvas = document.getElementById('mm');
@@ -187,7 +273,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   function resize(){ canvas.width=innerWidth; canvas.height=innerHeight; }
   resize(); addEventListener('resize', resize);
 
-  // STATIC WORLD — grass + rocks drawn ONCE to offscreen canvas
+  // STATIC WORLD (grass never moves)
   const worldCanvas = document.createElement('canvas');
   let worldCtx = null;
 
@@ -197,7 +283,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r);
     c.arcTo(x,y,x+w,y,r); c.closePath();
   }
-
   function drawRockOnWorld(r){
     worldCtx.fillStyle='rgba(0,0,0,.22)';
     worldCtx.beginPath(); worldCtx.ellipse(r.x+r.w/2+5, r.y+r.h+6, r.w/2, 11, 0, 0, Math.PI*2); worldCtx.fill();
@@ -212,24 +297,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     worldCtx.moveTo(r.x+r.w*0.66, r.y+r.h*0.22); worldCtx.lineTo(r.x+r.w*0.72, r.y+r.h-10);
     worldCtx.stroke();
   }
-
   function buildWorld(){
-    worldCanvas.width = MAP_W; worldCanvas.height = MAP_H;
+    worldCanvas.width=MAP_W; worldCanvas.height=MAP_H;
     worldCtx = worldCanvas.getContext('2d');
-    worldCtx.fillStyle = '#4ade80'; worldCtx.fillRect(0,0,MAP_W,MAP_H);
-    // static grass specks — LOCKED to world coords
+    worldCtx.fillStyle='#4ade80'; worldCtx.fillRect(0,0,MAP_W,MAP_H);
     for(let i=0;i<Math.floor(MAP_W*MAP_H/900);i++){
       const x=Math.random()*MAP_W, y=Math.random()*MAP_H;
       worldCtx.fillStyle = Math.random()<0.6 ? '#22c55e' : '#16a34a';
       worldCtx.fillRect(x,y,2,3);
     }
-    for(let i=0;i<400;i++){
+    for(let i=0;i<420;i++){
       const x=Math.random()*MAP_W, y=Math.random()*MAP_H;
       worldCtx.fillStyle=['#fef3c7','#fecaca','#fbcfe8','#ddd6fe'][i%4];
       worldCtx.fillRect(x,y,2,2);
     }
-    for(let i=0;i<80;i++){
-      const x=Math.random()*MAP_W, y=Math.random()*MAP_H, r=18+Math.random()*30;
+    for(let i=0;i<85;i++){
+      const x=Math.random()*MAP_W, y=Math.random()*MAP_H, r=18+Math.random()*32;
       worldCtx.fillStyle='rgba(180,130,80,.25)';
       worldCtx.beginPath(); worldCtx.arc(x,y,r,0,Math.PI*2); worldCtx.fill();
     }
@@ -240,32 +323,54 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     rocks.forEach(drawRockOnWorld);
   }
 
-  // MAIN RENDER — blits only visible rect of static world (grass never shifts)
+  // ========== MAIN RENDER with View Distance ==========
   function render(){
     const me = players.get(selfId);
     if (me) { camera.x+=(me.x-camera.x)*0.12; camera.y+=(me.y-camera.y)*0.12; }
-    const vx = Math.max(0, Math.min(MAP_W - canvas.width,  camera.x - canvas.width/2));
-    const vy = Math.max(0, Math.min(MAP_H - canvas.height, camera.y - canvas.height/2));
 
-    if (worldCtx) ctx.drawImage(worldCanvas, vx,vy,canvas.width,canvas.height, 0,0,canvas.width,canvas.height);
+    // View dist → scale factor (100% = normal, >100 = zoom out = see further)
+    const vf = cfg.viewDist/100;
+    const vw = canvas.width / vf;
+    const vh = canvas.height / vf;
 
+    const vx = Math.max(0, Math.min(MAP_W - vw, camera.x - vw/2));
+    const vy = Math.max(0, Math.min(MAP_H - vh, camera.y - vh/2));
+
+    // Blit static world (grass locked)
+    if (worldCtx) ctx.drawImage(worldCanvas, vx,vy,vw,vh, 0,0,canvas.width,canvas.height);
+
+    // DOM players — scale screen coords by vf
     playersEl.innerHTML='';
-    const ox=-vx, oy=-vy;
+    const sx = canvas.width/vw, sy = canvas.height/vh;
     players.forEach(p => {
-      if(p.x+80<vx||p.x-80>vx+canvas.width||p.y+80<vy||p.y-80>vy+canvas.height) return;
+      const sxp = (p.x-vx)*sx, syp = (p.y-vy)*sy;
+      if(sxp<-80||sxp>canvas.width+80||syp<-80||syp>canvas.height+80) return;
       const el=document.createElement('div');
       el.className='player'+(p.id===selfId?' me':'');
-      el.style.left=(p.x+ox)+'px'; el.style.top=(p.y+oy)+'px';
+      el.style.left = sxp+'px'; el.style.top = syp+'px';
+      el.style.transform = `translate(-50%,-50%) scale(${1/vf})`;
       el.innerHTML=`<img class="av" src="${p.avatar}" alt=""><div class="nm">${escapeHtml(p.name)}</div>`;
-      if(p.bubble){ const b=document.createElement('div'); b.className='bubble'; b.textContent=p.bubble; el.appendChild(b); }
+      // Render up to 3 bubbles stacked upward
+      if(p.bubbles && p.bubbles.length){
+        const bs = document.createElement('div');
+        bs.className='bubbles';
+        p.bubbles.slice(0,3).forEach((b,i) => {
+          const d = document.createElement('div');
+          d.className = 'bubble' + (i===0?' tail':'') + (b.fading?' fading':'');
+          d.textContent = b.text;
+          bs.appendChild(d);
+        });
+        el.appendChild(bs);
+      }
       playersEl.appendChild(el);
     });
-    drawMinimap(vx,vy);
+
+    drawMinimap(vx,vy,vw,vh);
     requestAnimationFrame(render);
   }
 
-  // MINIMAP
-  function drawMinimap(vx,vy){
+  // ========== MINIMAP ==========
+  function drawMinimap(vx,vy,vw,vh){
     const W=mmCanvas.width, H=mmCanvas.height, sx=W/MAP_W, sy=H/MAP_H;
     mmCtx.fillStyle='#166534'; mmCtx.fillRect(0,0,W,H);
     mmCtx.fillStyle='#22c55e'; mmCtx.fillRect(1,1,W-2,H-2);
@@ -275,14 +380,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       mmCtx.fillStyle = p.id===selfId ? '#facc15' : '#3b82f6';
       mmCtx.beginPath(); mmCtx.arc(p.x*sx,p.y*sy,p.id===selfId?3.5:2.5,0,Math.PI*2); mmCtx.fill();
     });
-    mmCtx.strokeStyle='rgba(255,255,255,.85)'; mmCtx.lineWidth=1;
-    mmCtx.strokeRect(vx*sx, vy*sy, Math.min(W,canvas.width*sx), Math.min(H,canvas.height*sy));
+    mmCtx.strokeStyle='rgba(255,255,255,.9)'; mmCtx.lineWidth=1;
+    mmCtx.strokeRect(vx*sx, vy*sy, Math.min(W,vw*sx), Math.min(H,vh*sy));
   }
 
-  // MOVEMENT
+  // Movement tick
   setInterval(() => { if((input.x||input.y)&&selfId) socket.emit('move',{dx:input.x,dy:input.y}); }, 1000/60);
-
-  // JOYSTICK
+  // ========== JOYSTICK ==========
   let jActive=false,jId=null,jcx=0,jcy=0;
   function jStart(e){
     const t=e.touches?e.touches[0]:e;
@@ -306,8 +410,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   window.addEventListener('mousemove',e=>{if(jActive)jMove(e)});
   window.addEventListener('mouseup',()=>{if(jActive)jEnd()});
 
-  // KEYBOARD
+  // ========== KEYBOARD + Enter to chat ==========
   addEventListener('keydown',e=>{
+    if(e.key === 'Enter'){
+      const ci = document.getElementById('ci');
+      if(document.activeElement === ci){
+        if(ci.value.trim()) document.getElementById('cf').dispatchEvent(new Event('submit'));
+        ci.blur();
+      } else {
+        if(!chatOn) toggleChat();
+        ci.focus();
+      }
+      return;
+    }
+    if(e.key === 'Escape' && document.activeElement?.id === 'ci'){
+      document.getElementById('ci').blur(); return;
+    }
+    if(document.activeElement?.tagName === 'INPUT') return;
     keys.add(e.key.toLowerCase()); updateKeys();
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
   });
@@ -322,23 +441,36 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     input.x=x/l; input.y=y/l;
   }
 
-  // CHAT
+  // ========== CHAT — log + 3 stacked bubbles ==========
   document.getElementById('cf').addEventListener('submit',e=>{
     e.preventDefault();
     const inp=document.getElementById('ci'), v=inp.value.trim();
     if(!v) return;
-    socket.emit('chat', v); inp.value='';
+    socket.emit('chat', v); inp.value=''; inp.blur();
   });
-  function addChat(name,msg){
+  function addChat(name,msg,isSys=false){
     const m=document.createElement('div');
-    m.className='msg'; m.innerHTML=`<b>${escapeHtml(name)}:</b> ${escapeHtml(msg)}`;
+    m.className='msg'+(isSys?' sys':'');
+    m.innerHTML=`<b>${escapeHtml(name)}:</b> ${escapeHtml(msg)}`;
     logEl.insertBefore(m, logEl.firstChild);
-    while(logEl.children.length>25) logEl.removeChild(logEl.lastChild);
-    setTimeout(()=>m.style.opacity='.5',6000);
-    setTimeout(()=>m.remove(),12000);
+    while(logEl.children.length>30) logEl.removeChild(logEl.lastChild);
+    setTimeout(()=>m.classList.add('fading'), 5500);
+    setTimeout(()=>{m.classList.add('gone');setTimeout(()=>m.remove(),400)}, 9000);
+  }
+  function pushBubble(pid, text){
+    const p = players.get(pid); if(!p) return;
+    if(!p.bubbles) p.bubbles = [];
+    p.bubbles.unshift({ text, fading:false });
+    if(p.bubbles.length > 3) p.bubbles.pop();
+    const b = p.bubbles[0];
+    clearTimeout(b._t);
+    b._t = setTimeout(() => {
+      b.fading = true;
+      setTimeout(() => { p.bubbles = p.bubbles.filter(x => x !== b); }, 500);
+    }, 4200);
   }
 
-  // SOCKET
+  // ========== SOCKET ==========
   const socket = io({ transports:['websocket','polling'] });
   let lastPing=Date.now();
   socket.on('connect',()=>{
@@ -355,19 +487,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     selfId=d.selfId; MAP_W=d.mapW; MAP_H=d.mapH; rocks=d.rocks||[];
     camera.x=MAP_W/2; camera.y=MAP_H/2;
     buildWorld();
-    d.players.forEach(p=>players.set(p.id,p));
+    d.players.forEach(p=>players.set(p.id,{...p,bubbles:[]}));
     wcEl.textContent=players.size;
     requestAnimationFrame(render);
-    addChat('🌍 System',`Welcome ${myName}! Map ${MAP_W}×${MAP_H}. ${players.size>1?(players.size-1)+' online.':'You are first!'}`);
+    addChat('🌍 System',`Welcome ${myName}! Map ${MAP_W}×${MAP_H}. Press Enter to chat.`,true);
   });
-  socket.on('playerJoin',p=>{players.set(p.id,p);wcEl.textContent=players.size;addChat('👋',`${p.name} joined`);});
+  socket.on('playerJoin',p=>{players.set(p.id,{...p,bubbles:[]});wcEl.textContent=players.size;addChat('👋',`${p.name} joined`,true);});
   socket.on('pos',({id,x,y})=>{const p=players.get(id);if(p){p.x=x;p.y=y;}});
   socket.on('chatMsg',({id,name,msg})=>{
     addChat(name,msg);
-    const p=players.get(id);
-    if(p){p.bubble=msg;clearTimeout(p._bt);p._bt=setTimeout(()=>{p.bubble=null;},4500);}
+    pushBubble(id, msg);
   });
-  socket.on('leave',id=>{const p=players.get(id);if(p)addChat('🚪',`${p.name} left`);players.delete(id);wcEl.textContent=players.size;});
+  socket.on('leave',id=>{const p=players.get(id);if(p)addChat('🚪',`${p.name} left`,true);players.delete(id);wcEl.textContent=players.size;});
 
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 })();
